@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>House Systems – Crossword</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0f1117; --surface:#1a1d27; --surface2:#22263a; --border:#2e3350;
+  --orange:#ff6b2b; --orange2:#ff8c55; --blue:#4f9eff; --green:#3ecf8e;
+  --yellow:#ffd166; --red:#ff4757; --text:#e8eaf0; --muted:#6b7399;
+  --cell:#1e2235; --cell-active:#2a3060; --cell-word:#252946;
+  --cell-correct:#1a3a2a; --cell-wrong:#3a1a1a;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;}
+body::before{content:'';position:fixed;inset:0;z-index:0;background:
+  radial-gradient(ellipse at 20% 10%,rgba(79,158,255,.06) 0%,transparent 50%),
+  radial-gradient(ellipse at 80% 90%,rgba(255,107,43,.06) 0%,transparent 50%);
+  pointer-events:none;}
+.wrap{position:relative;z-index:1;}
+header{padding:20px 28px 0;display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;}
+.eyebrow{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:3px;text-transform:uppercase;color:var(--orange);margin-bottom:4px;}
+h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(32px,5vw,56px);line-height:.9;letter-spacing:2px;}
+h1 span{color:var(--orange);}
+.stats{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:8px;}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:5px 12px;font-size:12px;color:var(--muted);}
+.stat strong{color:var(--text);}
+.stat-t{border-color:var(--orange);}.stat-t strong{color:var(--orange);}
+.layout{display:grid;grid-template-columns:1fr auto;gap:20px;padding:16px 28px 32px;max-width:1100px;margin:0 auto;}
+@media(max-width:860px){.layout{grid-template-columns:1fr;}header{padding:16px 16px 0;}.layout{padding:12px 16px 24px;}}
+.grid-wrap{display:flex;flex-direction:column;gap:10px;}
+.grid-box{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;overflow:auto;}
+#grid{display:grid;gap:2px;width:fit-content;margin:0 auto;}
+.cell{width:36px;height:36px;position:relative;cursor:pointer;}
+.ci{width:100%;height:100%;background:var(--cell);border:1.5px solid var(--border);border-radius:4px;display:flex;align-items:center;justify-content:center;transition:all .1s;position:relative;}
+.cell.blk .ci{background:var(--bg);border-color:transparent;cursor:default;}
+.cell.hw .ci{background:var(--cell-word);border-color:var(--blue);}
+.cell.ac .ci{background:var(--cell-active);border-color:var(--orange);box-shadow:0 0 0 2px rgba(255,107,43,.25);}
+.cell.ok .ci{background:var(--cell-correct);border-color:var(--green);}
+.cell.ng .ci{background:var(--cell-wrong);border-color:var(--red);}
+.cn{position:absolute;top:2px;left:2px;font-family:'DM Mono',monospace;font-size:7px;color:var(--muted);pointer-events:none;}
+.cl{font-family:'DM Mono',monospace;font-size:16px;font-weight:500;color:var(--text);pointer-events:none;text-transform:uppercase;}
+.cell.ok .cl{color:var(--green);}.cell.ng .cl{color:var(--red);}
+#hi{position:absolute;opacity:0;width:0;height:0;pointer-events:none;}
+.banner{background:var(--surface);border:1px solid var(--orange);border-radius:9px;padding:10px 14px;font-size:13px;display:none;}
+.banner.show{display:block;}
+.b-dir{font-family:'DM Mono',monospace;font-size:10px;color:var(--orange);text-transform:uppercase;letter-spacing:2px;margin-bottom:3px;}
+.b-en{color:var(--text);font-weight:600;}
+.b-vi{color:var(--muted);font-size:12px;font-style:italic;margin-top:2px;}
+.btns{display:flex;gap:8px;flex-wrap:wrap;}
+.btn{padding:8px 16px;border-radius:8px;border:none;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;}
+.bo{background:var(--orange);color:#fff;}.bo:hover{background:var(--orange2);}
+.bg{background:var(--surface2);color:var(--text);border:1px solid var(--border);}.bg:hover{border-color:var(--muted);}
+.bv{background:var(--green);color:#0f1117;}.bv:hover{filter:brightness(1.1);}
+.panel{width:260px;display:flex;flex-direction:column;gap:10px;}
+@media(max-width:860px){.panel{width:100%;flex-direction:row;flex-wrap:wrap;}}
+.cbox{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;flex:1;min-width:220px;}
+.chead{padding:10px 14px;font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:2px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:6px;}
+.chead .dbg{width:20px;height:20px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:10px;}
+.ah .dbg{background:rgba(79,158,255,.15);color:var(--blue);}
+.dh .dbg{background:rgba(255,107,43,.15);color:var(--orange);}
+.clist{padding:6px 0;max-height:280px;overflow-y:auto;}
+.clist::-webkit-scrollbar{width:3px;}.clist::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+.ci-clue{padding:7px 14px;font-size:12px;line-height:1.4;cursor:pointer;border-radius:5px;margin:1px 6px;transition:background .1s;display:flex;gap:7px;}
+.ci-clue:hover{background:var(--surface2);}
+.ci-clue.act{background:rgba(255,107,43,.1);border:1px solid rgba(255,107,43,.2);}
+.ci-clue.done{opacity:.35;}
+.cnum{font-family:'DM Mono',monospace;font-size:11px;color:var(--orange);min-width:20px;flex-shrink:0;margin-top:1px;}
+.win{display:none;position:fixed;inset:0;z-index:100;background:rgba(15,17,23,.9);align-items:center;justify-content:center;backdrop-filter:blur(8px);}
+.win.show{display:flex;}
+.wcard{background:var(--surface);border:1px solid var(--orange);border-radius:18px;padding:36px 44px;text-align:center;max-width:380px;box-shadow:0 0 60px rgba(255,107,43,.15);animation:pop .4s cubic-bezier(.34,1.56,.64,1);}
+@keyframes pop{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
+.we{font-size:52px;margin-bottom:12px;}
+.wt{font-family:'Bebas Neue',sans-serif;font-size:44px;color:var(--orange);letter-spacing:3px;}
+.ws{color:var(--muted);font-size:13px;margin:6px 0 18px;}
+.wtime{font-family:'DM Mono',monospace;font-size:32px;color:var(--green);}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div>
+    <div class="eyebrow">Flash for Construction · Unit 8</div>
+    <h1>HOUSE <span>SYSTEMS</span></h1>
+    <div class="stats">
+      <div class="stat stat-t">⏱ <strong id="tmr">00:00</strong></div>
+      <div class="stat">✅ <strong id="sc">0</strong>/<span id="tc">0</span> solved</div>
+      <div class="stat">📍 <strong id="cl">—</strong></div>
+    </div>
+  </div>
+</header>
+<div class="layout">
+  <div class="grid-wrap">
+    <div class="banner" id="bnr"><div class="b-dir" id="bdir"></div><div class="b-en" id="ben"></div><div class="b-vi" id="bvi"></div></div>
+    <div class="grid-box"><div id="grid"></div></div>
+    <div class="btns">
+      <button class="btn bo" onclick="checkAll()">🔍 Check All</button>
+      <button class="btn bg" onclick="revealLetter()">💡 Reveal Letter</button>
+      <button class="btn bg" onclick="clearGrid()">🗑 Clear</button>
+      <button class="btn bv" onclick="newGame()">🔄 New Game</button>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="cbox"><div class="chead ah"><span class="dbg">→</span> ACROSS</div><div class="clist" id="al"></div></div>
+    <div class="cbox"><div class="chead dh"><span class="dbg">↓</span> DOWN</div><div class="clist" id="dl"></div></div>
+  </div>
+</div>
+<div class="win" id="win"><div class="wcard"><div class="we">🏆</div><div class="wt">SOLVED!</div><div class="ws">Completed in</div><div class="wtime" id="wt">00:00</div><div style="margin-top:20px"><button class="btn bo" onclick="newGame()">Play Again</button></div></div></div>
+<input id="hi" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+</div>
+
+<script>
+const ROWS=12,COLS=12;
+// VERIFIED crossword data - all intersections manually checked
+const WORDS=[
+  // ACROSS
+  {w:"PLUMBING", r:0, c:0, d:"A", n:1,  en:"System of pipes and fixtures for water distribution",       vi:"Hệ thống cấp thoát nước"},
+  {w:"THERMOSTAT",r:2,c:0, d:"A", n:4,  en:"Device that regulates temperature in a heating system",     vi:"Bộ điều nhiệt"},
+  {w:"FURNACE",  r:4, c:0, d:"A", n:7,  en:"Burns fuel to produce heat in central heating",             vi:"Lò sưởi"},
+  {w:"COPPER",   r:6, c:0, d:"A", n:10, en:"Non-toxic metal widely used in modern water pipes",          vi:"Đồng"},
+  {w:"SOLAR",    r:6, c:7, d:"A", n:11, en:"Type of energy captured by panels on the roof",             vi:"Năng lượng mặt trời"},
+  {w:"DRAIN",    r:8, c:0, d:"A", n:13, en:"Channel that carries away used water and waste",             vi:"Hệ thống thoát nước"},
+  {w:"PANEL",    r:8, c:6, d:"A", n:14, en:"Electric ___ board containing switches for each room",       vi:"Bảng điện chính"},
+  {w:"BOILER",   r:10,c:0, d:"A", n:16, en:"Device that heats water in a central heating system",        vi:"Nồi hơi"},
+  {w:"STEEL",    r:10,c:7, d:"A", n:17, en:"Non-toxic metal used in modern water supply pipes",          vi:"Thép"},
+  // DOWN
+  {w:"PUT",   r:0, c:0, d:"D", n:1,  en:"To install or place a component in position",                 vi:"Lắp đặt vào vị trí"},
+  {w:"USER",  r:0, c:2, d:"D", n:2,  en:"Person who operates a building system",                       vi:"Người sử dụng hệ thống"},
+  {w:"MORON", r:0, c:3, d:"D", n:3,  en:"Someone who ignores safety regulations (informal)",           vi:"Người bất cẩn"},
+  {w:"GUT",   r:0, c:7, d:"D", n:5,  en:"To strip out the interior of a building for renovation",      vi:"Phá dỡ nội thất để cải tạo"},
+  {w:"ORC",   r:2, c:5, d:"D", n:6,  en:"Abbreviation: Outline Repair Cost (construction)",           vi:"Chi phí sửa chữa sơ bộ"},
+  {w:"SEE",   r:2, c:6, d:"D", n:8,  en:"To inspect or check a building component",                   vi:"Kiểm tra, quan sát"},
+  {w:"RAP",   r:4, c:2, d:"D", n:9,  en:"A sharp knock used to test hollow walls",                    vi:"Gõ kiểm tra tường rỗng"},
+  {w:"AMEN",  r:4, c:4, d:"D", n:12, en:"Final confirmation; agreement with a plan",                  vi:"Xác nhận cuối cùng"},
+  {w:"RADAR", r:6, c:5, d:"D", n:15, en:"Detection system; also used in building surveys",            vi:"Hệ thống ra-đa"},
+  {w:"STARS", r:6, c:7, d:"D", n:18, en:"Rating system for building energy performance",              vi:"Đánh giá sao (hiệu suất năng lượng)"},
+  {w:"LIEGE", r:6, c:9, d:"D", n:19, en:"City in Belgium known for its steel industry",               vi:"Thành phố Liège (Bỉ), trung tâm công nghiệp thép"},
+];
+
+let ugrid=Array.from({length:ROWS},()=>Array(COLS).fill(''));
+let lgrid=Array.from({length:ROWS},()=>Array(COLS).fill(null));
+let sel=null,selW=null;
+let sec=0,timerOn=false,tiv;
+
+// Build letter grid
+WORDS.forEach(w=>{
+  for(let i=0;i<w.w.length;i++){
+    const r=w.d==='A'?w.r:w.r+i, c=w.d==='A'?w.c+i:w.c;
+    if(!lgrid[r][c]) lgrid[r][c]={letter:w.w[i],num:null,words:[]};
+    lgrid[r][c].words.push(w);
+  }
+});
+// Assign numbers
+const numbered={};
+WORDS.forEach(w=>{
+  const k=`${w.r},${w.c}`;
+  if(!numbered[k]){numbered[k]=w.n;lgrid[w.r][w.c].num=w.n;}
+});
+
+function renderGrid(){
+  const g=document.getElementById('grid');
+  g.style.gridTemplateColumns=`repeat(${COLS},36px)`;
+  g.style.gridTemplateRows=`repeat(${ROWS},36px)`;
+  g.innerHTML='';
+  for(let r=0;r<ROWS;r++){
+    for(let c=0;c<COLS;c++){
+      const div=document.createElement('div');
+      div.className='cell'+(lgrid[r][c]?'':' blk');
+      div.dataset.r=r;div.dataset.c=c;
+      if(lgrid[r][c]){
+        const ci=document.createElement('div');ci.className='ci';
+        if(lgrid[r][c].num){const n=document.createElement('span');n.className='cn';n.textContent=lgrid[r][c].num;ci.appendChild(n);}
+        const cl=document.createElement('span');cl.className='cl';cl.textContent=ugrid[r][c];ci.appendChild(cl);
+        div.appendChild(ci);
+        div.addEventListener('click',()=>clickCell(r,c));
+      }
+      g.appendChild(div);
+    }
+  }
+  document.getElementById('tc').textContent=WORDS.length;
+}
+
+function renderClues(){
+  ['al','dl'].forEach(id=>document.getElementById(id).innerHTML='');
+  WORDS.filter(w=>w.d==='A').sort((a,b)=>a.n-b.n).forEach(w=>addClue(w,'al'));
+  WORDS.filter(w=>w.d==='D').sort((a,b)=>a.n-b.n).forEach(w=>addClue(w,'dl'));
+}
+function addClue(w,listId){
+  const d=document.createElement('div');
+  d.className='ci-clue';d.id=`c-${w.d}-${w.n}`;
+  d.innerHTML=`<span class="cnum">${w.n}</span><span>${w.en}</span>`;
+  d.addEventListener('click',()=>selectWord(w));
+  document.getElementById(listId).appendChild(d);
+}
+
+function clickCell(r,c){
+  if(!lgrid[r][c])return;
+  if(!timerOn)startTimer();
+  const ws=lgrid[r][c].words;
+  if(sel&&sel[0]===r&&sel[1]===c&&ws.length>1){
+    const other=ws.find(w=>w!==selW);
+    if(other){selectWord(other,[r,c]);return;}
+  }
+  const w=selW&&ws.includes(selW)?selW:ws[0];
+  selectWord(w,[r,c]);
+}
+
+function selectWord(w,cell=null){
+  selW=w;
+  if(!cell){
+    cell=[w.r,w.c];
+    for(let i=0;i<w.w.length;i++){
+      const r=w.d==='A'?w.r:w.r+i,c=w.d==='A'?w.c+i:w.c;
+      if(!ugrid[r][c]){cell=[r,c];break;}
+    }
+  }
+  sel=cell;
+  highlight();updateBanner();updateClueHL();
+  document.getElementById('hi').focus();
+}
+
+function getEl(r,c){return document.querySelector(`.cell[data-r="${r}"][data-c="${c}"]`);}
+
+function highlight(){
+  document.querySelectorAll('.cell').forEach(e=>{e.classList.remove('ac','hw');});
+  if(!selW)return;
+  const w=selW;
+  for(let i=0;i<w.w.length;i++){
+    const r=w.d==='A'?w.r:w.r+i,c=w.d==='A'?w.c+i:w.c;
+    const e=getEl(r,c);if(e){e.classList.add('hw');}
+  }
+  if(sel){const e=getEl(sel[0],sel[1]);if(e){e.classList.remove('hw');e.classList.add('ac');}}
+}
+
+function updateBanner(){
+  const b=document.getElementById('bnr');
+  if(!selW){b.classList.remove('show');return;}
+  b.classList.add('show');
+  document.getElementById('bdir').textContent=`${selW.n} ${selW.d==='A'?'ACROSS':'DOWN'}`;
+  document.getElementById('ben').textContent=selW.en;
+  document.getElementById('bvi').textContent=selW.vi;
+  document.getElementById('cl').textContent=`${selW.n}${selW.d==='A'?'A':'D'}`;
+}
+
+function updateClueHL(){
+  document.querySelectorAll('.ci-clue').forEach(e=>e.classList.remove('act'));
+  if(selW){const e=document.getElementById(`c-${selW.d}-${selW.n}`);if(e){e.classList.add('act');e.scrollIntoView({block:'nearest'});}}
+}
+
+function moveCaret(d){
+  if(!selW||!sel)return;
+  const w=selW;
+  const cells=[];
+  for(let i=0;i<w.w.length;i++) cells.push([w.d==='A'?w.r:w.r+i,w.d==='A'?w.c+i:w.c]);
+  const idx=cells.findIndex(([r,c])=>r===sel[0]&&c===sel[1]);
+  const ni=Math.max(0,Math.min(cells.length-1,idx+d));
+  sel=cells[ni];highlight();
+}
+
+function nextWord(d){
+  const all=WORDS.slice().sort((a,b)=>a.n!==b.n?a.n-b.n:a.d.localeCompare(b.d));
+  const i=all.findIndex(w=>w===selW);
+  selectWord(all[(i+d+all.length)%all.length]);
+}
+
+document.getElementById('hi').addEventListener('keydown',e=>{
+  if(!sel||!selW)return;
+  e.preventDefault();
+  const [r,c]=sel,k=e.key.toUpperCase();
+  if(k==='BACKSPACE'){if(ugrid[r][c]){ugrid[r][c]='';updateCell(r,c);}else{moveCaret(-1);}return;}
+  if(k==='ARROWLEFT'||k==='ARROWUP'){moveCaret(-1);return;}
+  if(k==='ARROWRIGHT'||k==='ARROWDOWN'){moveCaret(1);return;}
+  if(k==='TAB'){nextWord(e.shiftKey?-1:1);return;}
+  if(k==='ENTER'){nextWord(1);return;}
+  if(/^[A-Z]$/.test(k)){if(!timerOn)startTimer();ugrid[r][c]=k;updateCell(r,c);moveCaret(1);}
+});
+
+document.getElementById('hi').addEventListener('input',e=>{
+  const v=e.data?e.data.toUpperCase():'';
+  if(!sel||!/^[A-Z]$/.test(v))return;
+  if(!timerOn)startTimer();
+  ugrid[sel[0]][sel[1]]=v;updateCell(sel[0],sel[1]);moveCaret(1);
+  document.getElementById('hi').value='';
+});
+
+function updateCell(r,c){
+  const e=getEl(r,c);if(!e)return;
+  e.classList.remove('ok','ng');
+  const cl=e.querySelector('.cl');if(cl)cl.textContent=ugrid[r][c];
+}
+
+function checkAll(){
+  let solved=0;
+  WORDS.forEach(w=>{
+    let ok=true;
+    for(let i=0;i<w.w.length;i++){
+      const r=w.d==='A'?w.r:w.r+i,c=w.d==='A'?w.c+i:w.c;
+      if(ugrid[r][c]!==w.w[i]){ok=false;break;}
+    }
+    if(ok){solved++;const e=document.getElementById(`c-${w.d}-${w.n}`);if(e)e.classList.add('done');}
+  });
+  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
+    if(!lgrid[r][c]||!ugrid[r][c])continue;
+    const e=getEl(r,c);if(!e)continue;
+    e.classList.remove('ok','ng');
+    e.classList.add(ugrid[r][c]===lgrid[r][c].letter?'ok':'ng');
+  }
+  document.getElementById('sc').textContent=solved;
+  if(solved===WORDS.length){stopTimer();document.getElementById('win').classList.add('show');const m=String(Math.floor(sec/60)).padStart(2,'0'),s=String(sec%60).padStart(2,'0');document.getElementById('wt').textContent=`${m}:${s}`;}
+}
+
+function revealLetter(){
+  if(!sel)return;
+  const[r,c]=sel;if(!lgrid[r][c])return;
+  ugrid[r][c]=lgrid[r][c].letter;updateCell(r,c);
+  const e=getEl(r,c);if(e)e.classList.add('ok');moveCaret(1);
+}
+
+function clearGrid(){
+  ugrid=Array.from({length:ROWS},()=>Array(COLS).fill(''));
+  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){updateCell(r,c);const e=getEl(r,c);if(e)e.classList.remove('ok','ng');}
+  document.querySelectorAll('.ci-clue').forEach(e=>e.classList.remove('done'));
+  document.getElementById('sc').textContent='0';
+}
+
+function newGame(){
+  document.getElementById('win').classList.remove('show');
+  clearGrid();sec=0;timerOn=false;stopTimer();document.getElementById('tmr').textContent='00:00';
+  sel=null;selW=null;highlight();document.getElementById('bnr').classList.remove('show');document.getElementById('cl').textContent='—';
+}
+
+function startTimer(){
+  if(timerOn)return;timerOn=true;
+  tiv=setInterval(()=>{sec++;const m=String(Math.floor(sec/60)).padStart(2,'0'),s=String(sec%60).padStart(2,'0');document.getElementById('tmr').textContent=`${m}:${s}`;},1000);
+}
+function stopTimer(){clearInterval(tiv);}
+
+renderGrid();renderClues();
+document.addEventListener('click',e=>{if(e.target.closest('#grid')||e.target.closest('.clist'))document.getElementById('hi').focus();});
+</script>
+</body>
+</html>
